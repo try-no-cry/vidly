@@ -1,25 +1,32 @@
 import React, {Component} from 'react';
-import { getMovies,deleteMovie, getMovie } from '../services/fakeMovieService.js';
 import Like from './like.jsx';
+import Pagination from './pagination.jsx';
+import {paginate} from '../utils/paginate';
 
 class Movie extends Component {
     
-    state = 
-    {
-       movie:getMovies()
-        
-    }
-
+     state={
+         pageSize:4,
+         currentPage:1
+     }
      
     render() { 
+        const { onToggleLike, onDeleteMovieClicked, currentGenre,genres}=this.props;
+        let {movies}=this.props;
 
-         
+        if(currentGenre!=0)
+        {
+            movies=movies.filter(movie=>movie.genre.name==genres[currentGenre]);
+            // console.log(movies);
+        }
 
-        const {length}=this.state.movie;
+        const moviesOnThePage=paginate(movies,this.state.currentPage,this.state.pageSize);
+        // console.log(moviesOnThePage);
+        const length=movies.length;
         if(length==0)
            return <p>No Movies Listed!!</p>;
            
-        return ( 
+        return (  
             <React.Fragment>
                 <p>Total <span className="badge">{length}</span> movies are listed</p>
                 
@@ -30,8 +37,8 @@ class Movie extends Component {
                         <th scope="col">Title</th>
                         <th scope="col">Genre</th>
                         <th scope="col">Stock</th>
-                        <th scope="col">Daily Rental rate</th>
-                        <th className="col">Loved it?</th>
+                        <th scope="col">Rate</th>
+                        <th scope="col">Like</th> 
                         <th scope="col">Action</th>
                        
                         </tr>
@@ -41,7 +48,7 @@ class Movie extends Component {
 
                          
                             
-                            { this.state.movie.map(
+                            { moviesOnThePage.map(
                                 mo=> (
                                       
                                     <tr>
@@ -49,8 +56,8 @@ class Movie extends Component {
                                         <td>{mo.genre.name}</td>
                                         <td>{mo.numberInStock}</td>
                                         <td>{mo.dailyRentalRate}</td>
-                                        <td><Like onToggleClick={()=>this.handleToggleLike(mo._id)} liked={mo.liked}/></td>
-                                        <td><button key={mo._id} className="btn btn-danger btn-sm" onClick={()=>this.delThisMovie(mo._id)}>Delete</button></td>
+                                        <td><Like key={mo._id} onToggleClick={()=>onToggleLike(mo._id)} liked={mo.liked}/></td>
+                                        <td><button key={mo._id} className="btn btn-danger btn-sm" onClick={()=>onDeleteMovieClicked(mo._id)}>Delete</button></td>
                                     </tr>
                                     
                             )
@@ -61,30 +68,22 @@ class Movie extends Component {
                           
                     </tbody>
                 </table>
+                <Pagination getCurrentPageClass={this.handleCurrentPageClass} moviesLen={length} currentPage={this.state.currentPage} pageSize={this.state.pageSize} onPageChange={this.handlePageChange}/>
+
             </React.Fragment>
          );
     }
 
-    handleToggleLike=(m_id)=>
-    {
-        const movie=getMovie(m_id);
-        const movies=[...this.state.movie];
-        const index=movies.indexOf(movie);
-        movies[index]={...movies[index]};
-        movies[index].liked=!movies[index].liked;
-         
-        this.setState({movie:movies});
-        
-        console.log();
-    }
+handlePageChange=(page)=>
+{
+    
+   if(page===this.state.pageSize) return null;
 
-    delThisMovie=(id)=>
-    {
-        deleteMovie(id);
-        const mv=this.state.movie.filter(m=>m._id!=id);
-        this.setState({movie:mv}); 
-    }
+   this.setState({currentPage:page});
 
+}
+
+    
 }
  
 export default Movie;
